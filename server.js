@@ -11,21 +11,38 @@ app.use(bodyParser.urlencoded({extended: false}));
 
 var dbUrl = 'mongodb://eliot:Pirulin.01@ds245250.mlab.com:45250/learning-nodejs'
 
-var messages = [
-    {name: 'Tim', message: 'Hi'},
-    {name: 'Jane', message: 'Hello'}
-]
+// Message Model
+var Message = mongoose.model('Message', {
+    name: String,
+    message: String
+});
+
+// var messages = [
+//     {name: 'Tim', message: 'Hi'},
+//     {name: 'Jane', message: 'Hello'}
+// ];
 
 // End points
 app.get('/messages', function(request, response) {
-    response.send(messages);
+    Message.find({}, function (err, data) {
+        response.send(data);    
+    });
 });
 
 app.post('/messages', function(request, response) {
-    console.log('request.body', request.body);
-    messages.push(request.body);
-    io.emit('message', request.body);
-    response.sendStatus(200);
+    // console.log('request.body', request.body);
+    var message = new Message(request.body);
+    
+    message.save(function (err) {
+        if (err) {
+            sendStatus(500);
+        } else {
+            // messages.push(request.body);
+            io.emit('message', request.body);
+            response.sendStatus(200);
+        }
+    });
+
 });
 
 io.on('connection', function (socket) {
